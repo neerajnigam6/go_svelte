@@ -3,7 +3,7 @@
     import { onMount } from "svelte";
 
     export let params: any = {}
-    let width = 900
+    export let width = 600
     let vid = [{ "description" : "Big Buck Bunny tells the story of a giant rabbit with a heart bigger than himself. When one sunny day three rodents rudely harass him, something snaps... and the rabbit ain't no bunny anymore! In the typical cartoon tradition he prepares the nasty rodents a comical revenge.\n\nLicensed under the Creative Commons Attribution license\nhttp://www.bigbuckbunny.org",
               "sources" : [ "https://commondatastorage.googleapis.com/gtv-videos-bucket/CastVideos/dash/BigBuckBunnyVideo.mp4" ],
               "subtitle" : "By Blender Foundation",
@@ -28,8 +28,11 @@
               "thumb" : "images/ForBiggerEscapes.jpg",
               "title" : "For Bigger Escape"
             }]
+
+    export let autoplay = false
     let isPlaying = false
     let showControls = false
+    let ended = false
     let showControlsCounter = 0
     let container: HTMLDivElement
     let video: HTMLVideoElement
@@ -44,6 +47,8 @@
         setFullscreenData(!!document.fullscreenElement);
       });
     })
+
+    
     
     function toggleAnimation(elem: HTMLDivElement, animation_duration: number = 1) {
       elem.style.display = "block"
@@ -66,6 +71,11 @@
 
     function updateProgress(){
       const value = (video.currentTime / video.duration) * 100;
+      if(video.ended || value > 95) {
+        ended = true
+      }else {
+        ended = false
+      }
       currentTime = formatSeconds(video.currentTime)
       videoProgressPercent = value
     }
@@ -123,6 +133,11 @@
       // console.log(w/(e.clientX) * 100)
     }
 
+    function setVolume(vol: number) {
+      console.log(vol)
+      video.volume = vol/100
+    }
+
     function toggle_playback(element: HTMLDivElement) {
       showControlsFunc()
       if(!video) return
@@ -136,6 +151,7 @@
       toggleAnimation(element, 1)
     }
 
+    // temporarily display side pane and progress bar
     function showControlsFunc() {
       showControls = true
       showControlsCounter += 1
@@ -146,13 +162,19 @@
         }
       }, 3000)
     }
+
+    function restartVideo() {
+      video.currentTime = 0
+      video.play()
+    }
 </script>
 
 <div class="flex flex-col justify-center items-center h-screen w-screen" >
   <div class="w-fit h-fit relative" bind:this={container} on:focus={showControlsFunc}
-  on:mousemove={showControlsFunc}
+      on:mousemove={showControlsFunc}
+      role="presentation"
   >
-    <video on:timeupdate={updateProgress} class="rounded h-fit w-[{width}px]" bind:this={video}>
+    <video {autoplay} on:timeupdate={updateProgress} class="rounded h-fit" width="{width}" bind:this={video}>
       <source src="{vid[1].sources[0]}" />
     </video>  
     
@@ -178,18 +200,26 @@
     </div>
     
     <!-- status pane -->
-    <div class="right-2 top-2 h-5/6 w-16 flex flex-col items-center absolute" 
+    <div class="right-0 top-0 h-5/6 w-16 flex flex-col items-center absolute" 
         id="status_pane" aria-label="side-pane">
       <div class="flex flex-col {showControls?'block':'hidden'}">
-        <div class="rounded-full bg-yellow-500 bg-opacity-50 m-1">
-          <i class="fa fa-pause text-lg text-white px-5 py-4 "></i>
-        </div>
-        <div class="mt-5">
+        {#if ended}
+          <button class="rounded-full bg-yellow-500 bg-opacity-50 m-1" on:click={restartVideo}>
+            <i class="fa fa-refresh text-lg text-white px-4 py-4 "></i>
+          </button>
+        {:else}
+          <button class="rounded-full bg-yellow-500 bg-opacity-50 m-1" on:click={toggle_playback}>
+            <i class="fa { isPlaying ? 'fa-play pr-4 pl-5' : 'fa-pause px-5'} text-lg text-white  py-4 "></i>
+          </button>
+        {/if}
+        <div class="">
           {#if (document?.fullscreenEnabled)}
             <div aria-label="fullscreen-button" on:click={fullscreen} class="flex flex-row justify-center hover:bg-gray-500 hover:bg-opacity-50 py-2 items-center text-white rounded-full ">
               <Icon icon="mdi:fullscreen" width="2em" />
             </div>
           {/if}
+          <div class="flex flex-row justify-center h-16">
+            <input type="range" orient="vertical" on:change={(event) => setVolume(event.currentTarget.value)}/></div>
         </div>
       </div>
     </div>
@@ -219,4 +249,11 @@
     90% { opacity: 1; }
   }
 
+  input[type=range][orient=vertical] {
+      writing-mode: vertical-lr;
+      direction: rtl;
+      appearance: slider-vertical;
+      width: 8px;
+      vertical-align: bottom;
+  }
 </style>
