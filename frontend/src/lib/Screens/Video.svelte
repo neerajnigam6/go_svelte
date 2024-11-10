@@ -29,6 +29,8 @@
               "title" : "For Bigger Escape"
             }]
     let isPlaying = false
+    let showControls = false
+    let showControlsCounter = 0
     let container: HTMLDivElement
     let video: HTMLVideoElement
     let currentTime = "00:00"
@@ -80,6 +82,7 @@
     }
 
     function fullscreen(){
+      showControlsFunc()
       if (document.fullscreenElement !== null) {
         // The document is in fullscreen mode
         document.exitFullscreen();
@@ -92,6 +95,7 @@
     }
 
     function seek(seekLeft: boolean, time: number, element: HTMLDivElement) {
+      showControlsFunc()
       if(seekLeft) {
         // seek left
         if(video.currentTime > 5) {
@@ -106,6 +110,7 @@
     }
 
     function seekPosition(e: MouseEvent){
+      showControlsFunc()
       if(!e.currentTarget) return
   
       let rect = e.currentTarget.getBoundingClientRect();
@@ -119,6 +124,7 @@
     }
 
     function toggle_playback(element: HTMLDivElement) {
+      showControlsFunc()
       if(!video) return
       if(video.paused || video.ended) {
         video.play()
@@ -129,10 +135,23 @@
       }
       toggleAnimation(element, 1)
     }
+
+    function showControlsFunc() {
+      showControls = true
+      showControlsCounter += 1
+      setTimeout(() => {
+        showControlsCounter -= 1
+        if(showControlsCounter == 0){
+          showControls = false
+        }
+      }, 3000)
+    }
 </script>
 
 <div class="flex flex-col justify-center items-center h-screen w-screen" >
-  <div class="w-fit h-fit relative" bind:this={container}>
+  <div class="w-fit h-fit relative" bind:this={container} on:focus={showControlsFunc}
+  on:mousemove={showControlsFunc}
+  >
     <video on:timeupdate={updateProgress} class="rounded h-fit w-[{width}px]" bind:this={video}>
       <source src="{vid[1].sources[0]}" />
     </video>  
@@ -159,12 +178,12 @@
     </div>
     
     <!-- status pane -->
-    <div class="right-2 top-2 h-fit w-fit absolute z-10 {isPlaying?'hidden':'block'}" id="status_pane">
-      <div class="flex flex-col">
+    <div class="right-2 top-2 h-5/6 w-16 flex flex-col items-center absolute" 
+        id="status_pane" aria-label="side-pane">
+      <div class="flex flex-col {showControls?'block':'hidden'}">
         <div class="rounded-full bg-yellow-500 bg-opacity-50 m-1">
           <i class="fa fa-pause text-lg text-white px-5 py-4 "></i>
         </div>
-        
         <div class="mt-5">
           {#if (document?.fullscreenEnabled)}
             <div aria-label="fullscreen-button" on:click={fullscreen} class="flex flex-row justify-center hover:bg-gray-500 hover:bg-opacity-50 py-2 items-center text-white rounded-full ">
@@ -176,14 +195,15 @@
     </div>
 
     <!-- progress bar -->
-    <div class="absolute bottom-0 w-full py-2 px-4 flex flex-row justify-center items-center">
-      <!-- <progress bind:this={videoProgress} max="100" value="0" class="h-2 w-full">Progress</progress> -->
-      <button on:click={(e) => seekPosition(e)} class="py-4 w-full" aria-label="seek-button">
-        <div class="bg-gray-500 bg-opacity-50 w-full rounded h-2">
-          <div class="bg-yellow-500 rounded h-2 w-0" style="width: {videoProgressPercent}%" ></div>
-        </div>
-      </button>
-      <div class="text-white px-2">{ currentTime }</div>
+    <div class="absolute bottom-0 w-full py-2 px-4">
+      <div class="{showControls?'block':'hidden'} w-full h-full  flex flex-row justify-center items-center">
+        <button on:click={(e) => seekPosition(e)} class="py-4 w-full" aria-label="seek-button">
+          <div class="bg-gray-500 bg-opacity-50 w-full rounded h-2">
+            <div class="bg-yellow-500 rounded h-2 w-0" style="width: {videoProgressPercent}%" ></div>
+          </div>
+        </button>
+        <div class="text-white px-2">{ currentTime }</div>
+      </div>
     </div>
   </div>
   
