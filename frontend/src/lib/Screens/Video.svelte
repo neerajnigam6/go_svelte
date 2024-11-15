@@ -3,9 +3,9 @@
     import { onMount } from "svelte";
 
     export let params: any = {}
-    export let width = 600
+    export let width = 900
     let vid = [{ "description" : "Big Buck Bunny tells the story of a giant rabbit with a heart bigger than himself. When one sunny day three rodents rudely harass him, something snaps... and the rabbit ain't no bunny anymore! In the typical cartoon tradition he prepares the nasty rodents a comical revenge.\n\nLicensed under the Creative Commons Attribution license\nhttp://www.bigbuckbunny.org",
-              "sources" : [ "https://commondatastorage.googleapis.com/gtv-videos-bucket/CastVideos/dash/BigBuckBunnyVideo.mp4" ],
+              "sources" : [ "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunnyVideo.mp4" ],
               "subtitle" : "By Blender Foundation",
               "thumb" : "images/BigBuckBunny.jpg",
               "title" : "Big Buck Bunny"
@@ -30,13 +30,18 @@
             }]
 
     export let autoplay = false
+    export let src: string | Object = vid[0].sources[0] 
+    
+
     let isPlaying = false
-    let showControls = false
+    let sourceQuality = []
+    let showControls = true
     let ended = false
     let showControlsCounter = 0
     let container: HTMLDivElement
     let video: HTMLVideoElement
     let currentTime = "00:00"
+    let totalTime = "00:00"
     let videoProgressPercent: number = 0
     let leftSeekIcon: HTMLDivElement
     let rightSeekIcon: HTMLDivElement
@@ -141,6 +146,7 @@
     function toggle_playback(element: HTMLDivElement) {
       showControlsFunc()
       if(!video) return
+      totalTime = formatSeconds(video.duration)
       if(video.paused || video.ended) {
         video.play()
         isPlaying = true
@@ -174,7 +180,9 @@
       on:mousemove={showControlsFunc}
       role="presentation"
   >
-    <video {autoplay} on:timeupdate={updateProgress} class="rounded h-fit" width="{width}" bind:this={video}>
+    <video {autoplay} on:timeupdate={updateProgress} class="rounded h-fit" width="{width}" bind:this={video}
+      
+    >
       <source src="{vid[1].sources[0]}" />
     </video>  
     
@@ -200,7 +208,7 @@
     </div>
     
     <!-- status pane -->
-    <div class="right-0 top-0 h-5/6 w-16 flex flex-col items-center absolute" 
+    <div class="right-0 top-1 h-5/6 w-16 flex flex-col items-center absolute" 
         id="status_pane" aria-label="side-pane">
       <div class="flex flex-col {showControls?'block':'hidden'}">
         {#if ended}
@@ -228,11 +236,11 @@
     <div class="absolute bottom-0 w-full py-2 px-4">
       <div class="{showControls?'block':'hidden'} w-full h-full  flex flex-row justify-center items-center">
         <button on:click={(e) => seekPosition(e)} class="py-4 w-full" aria-label="seek-button">
-          <div class="bg-gray-500 bg-opacity-50 w-full rounded h-2">
-            <div class="bg-yellow-500 rounded h-2 w-0" style="width: {videoProgressPercent}%" ></div>
+          <div class="bg-gray-500 bg-opacity-20 w-full h-1 group hover:h-2 transition ease-in-out duration-200">
+            <div class="bg-yellow-500 h-1 w-0 group-hover:h-2 transition ease-in-out duration-200" style="width: {videoProgressPercent}%" ></div>
           </div>
         </button>
-        <div class="text-white px-2">{ currentTime }</div>
+        <div class="text-white px-2">{ currentTime }/{totalTime}</div>
       </div>
     </div>
   </div>
