@@ -5,35 +5,77 @@
     export let params: any = {}
     export let width = 900
     export let autoplay = false
-    export let src: string | Object
+    export let src: string | string[] | Quality | Quality[]
+    let localSrc: string[];
     
+    type Quality = {
+      quality: string,
+      src: string[]
+    }
 
     let isPlaying = false
-    let sourceQuality = []
+
+    // if multiple quality options are available for this video
+    let localQuality = []
+    let currentQuality;
     let showControls = true
     let ended = false
     let showControlsCounter = 0
     let container: HTMLDivElement
     let video: HTMLVideoElement
-    let currentTime = "00:00"
-    let totalTime = "00:00"
+    let currentTime = "00:00:00"
+    let totalTime = "00:00:00"
     let videoProgressPercent: number = 0
     let leftSeekIcon: HTMLDivElement
     let rightSeekIcon: HTMLDivElement
     let playPauseIcon: HTMLDivElement
 
     onMount(() => {
+      setLocalSrc()
+      console.log(localSrc)
+      console.log(localQuality)
       document.addEventListener("fullscreenchange", (e) => {
         setFullscreenData(!!document.fullscreenElement);
       });
+
+
     })
+
+    function setLocalSrc() {
+      if(src == null) return;
+      if(typeof(src) == 'object') {
+        console.log("src is object")
+        // src is an array or QualityObject
+        if(Array.isArray(src)){
+          // src is array of strings or array of quality object
+          // @ts-ignore
+          if(src.length == 0) return;
+          if(typeof(src[0]) == 'string'){
+            localSrc = src
+          }else{
+            localSrc = src[0].src
+            currentQuality = src[0]
+            localQuality = src
+          }
+        }else{
+          localSrc = src.src
+          currentQuality = src
+          localQuality = [src]
+        }
+      }else{
+        localSrc = [src]
+      }
+    }
+
+    function toggleQuality() {
+
+    }
 
     let _lastVolume = 0;
     let volume = 50;
 
     function onKeyDown(event: KeyboardEvent) {
       if(event.repeat) return
-      console.log(event.key )
       switch(event.key) {
         case "f":
           fullscreen()
@@ -64,7 +106,6 @@
       }
     }
     
-    
     function toggleAnimation(elem: HTMLDivElement, animation_duration: number = 1) {
       elem.style.display = "block"
       elem.style.animation = `fadeInOut ${animation_duration}s ease-in-out`
@@ -79,8 +120,8 @@
         const minutes = Math.floor((seconds % 3600) / 60);
         const remainingSeconds = seconds % 60;
 
-        if(!hours && !minutes) return `${remainingSeconds}`
-        if(!hours) return `${minutes}:${remainingSeconds}`
+        if(!hours && !minutes) return `00:00:${remainingSeconds}`
+        if(!hours) return `00:${minutes}:${remainingSeconds}`
         return `${hours}:${minutes}:${remainingSeconds}`;
     }
 
@@ -197,8 +238,10 @@
     <video {autoplay} on:timeupdate={updateProgress} class="rounded h-fit" width="{width}" bind:this={video}
       
     >
-      <source src="{src}" />
-    </video>  
+      {#each localSrc as s}
+        <source src="{s}" />
+      {/each}
+    </video>
     
     <div class="left-0 bottom-0 absolute h-full w-full p-0 m-0 flex flex-row" id="controls">
       <button on:click={(e) => seek(true, 5, leftSeekIcon)} aria-label="left-seek-button "
@@ -225,21 +268,33 @@
     <div class="right-0 top-1 h-5/6 w-16 flex flex-col items-center absolute" 
         id="status_pane" aria-label="side-pane">
       <div class="flex flex-col {showControls?'block':'hidden'}">
+        <!-- restart/play/pause -->
         {#if ended}
-          <button class="rounded-full bg-yellow-500 bg-opacity-50 m-1" on:click={restartVideo}>
-            <i class="fa fa-refresh text-lg text-white px-4 py-4 "></i>
+          <button class="rounded-full bg-yellow-500 bg-opacity-50 my-1" on:click={restartVideo}>
+            <i class="fa fa-refresh text-lg text-whitew-14 h-14 "></i>
           </button>
         {:else}
-          <button class="rounded-full bg-yellow-500 bg-opacity-50 m-1" on:click={toggle_playback}>
-            <i class="fa { isPlaying ? 'fa-play pr-4 pl-5' : 'fa-pause px-5'} text-lg text-white  py-4 "></i>
+          <button class="rounded-full bg-yellow-500 bg-opacity-50 my-1" on:click={toggle_playback}>
+            <i class="fa { isPlaying ? 'fa-play w-12 h-12' : 'fa-pause w-12 h-12'} text-lg text-white  py-4 "></i>
           </button>
         {/if}
+
+
+        <!-- fullscreen -->
         <div class="">
           {#if (document?.fullscreenEnabled)}
-            <div aria-label="fullscreen-button" on:click={fullscreen} class="flex flex-row justify-center hover:bg-gray-500 bg-opacity-50 bg-gray-700 my-1 py-2 items-center text-white rounded-full ">
+            <div aria-label="fullscreen-button" on:click={fullscreen} class="flex flex-row justify-center hover:bg-gray-500 bg-opacity-50 bg-gray-700 my-1 w-12 h-12 items-center text-white rounded-full ">
               <Icon icon="mdi:fullscreen" width="2em" />
             </div>
           {/if}
+
+          <!-- quality selector if available -->
+          {#if localQuality.length > 0}
+            <div aria-label="qulity-button" on:click={toggleQuality} class="flex flex-row justify-center hover:bg-gray-500 bg-opacity-50 bg-gray-700 my-1 w-12 h-12 items-center text-white rounded-full ">
+              <p class="text-sm">{currentQuality.quality}</p>
+            </div>
+          {/if}
+          <!-- volume -->
           <div class="flex flex-row justify-center h-16">
             <input type="range" orient="vertical" bind:value={volume}  on:change={(event) => setVolume(volume)}/></div>
         </div>

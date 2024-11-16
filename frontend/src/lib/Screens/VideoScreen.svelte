@@ -28,4 +28,4 @@
     
 </script>
 
-<div class="h-screen w-screen justify-center items-center flex flex-col"><Video src={vid[1].sources[0]}/></div>
+<div class="h-screen w-screen justify-center items-center flex flex-col"><Video src={[{src: [vid[1].sources[0]], quality: "720"}, {src: [vid[2].sources[0]], quality: "HD"}]}/></div>
