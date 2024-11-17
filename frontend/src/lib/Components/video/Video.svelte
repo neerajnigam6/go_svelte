@@ -1,12 +1,11 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
-
-  export let params: any = {};
   export let width = 950;
   export let autoplay = false;
+  export let volume = 50;
   export let src: string | string[] | Quality | Quality[];
-  let localSrc: string[];
+  
 
   type Quality = {
     quality: string;
@@ -16,15 +15,17 @@
   let isPlaying = false;
 
   // if multiple quality options are available for this video
-  let localQuality = [];
-  let currentQuality;
+  let localQuality: Quality[] = [];
+  let currentQuality: Quality;
+  let _lastVolume = 0;
+  let localSrc: string[];
   let showControls = true;
   let ended = false;
   let showControlsCounter = 0;
   let container: HTMLDivElement;
   let video: HTMLVideoElement;
-  let currentTime = "00:00:00";
-  let totalTime = "00:00:00";
+  let currentTime = "00:00";
+  let totalTime = "00:00";
   let videoProgressPercent: number = 0;
   let leftSeekIcon: HTMLDivElement;
   let rightSeekIcon: HTMLDivElement;
@@ -74,9 +75,6 @@
     video.play()
   }
 
-  let _lastVolume = 0;
-  let volume = 50;
-
   function onKeyDown(event: KeyboardEvent) {
     if (event.repeat) return;
     switch (event.key) {
@@ -111,7 +109,8 @@
     elem: HTMLDivElement,
     animation_duration: number = 1,
   ) {
-    elem.style.display = "block";
+    elem.style.display = "flex";
+    elem.style.flexDirection = "colume"
     elem.style.animation = `fadeInOut ${animation_duration}s ease-in-out`;
     setTimeout(() => {
       elem.style.display = "none";
@@ -124,8 +123,8 @@
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
 
-    if (!hours && !minutes) return `00:00:${remainingSeconds}`;
-    if (!hours) return `00:${minutes}:${remainingSeconds}`;
+    if (!hours && !minutes) return `00:${remainingSeconds}`;
+    if (!hours) return `${minutes}:${remainingSeconds}`;
     return `${hours}:${minutes}:${remainingSeconds}`;
   }
 
@@ -256,7 +255,7 @@
 
     <div
       class="left-0 bottom-0 absolute h-full w-full p-0 m-0 flex flex-row"
-      id="controls"
+      id="controls"  
     >
       <button
         on:click={(e) => seek(true, 5, leftSeekIcon)}
@@ -266,9 +265,9 @@
         <div
           bind:this={leftSeekIcon}
           aria-label="left-seek-icon"
-          class="rounded-full bg-yellow-500 px-5 py-4 bg-opacity-50 hidden"
+          class="rounded-full bg-yellow-500 bg-opacity-50 hidden text-white h-14 w-14 justify-center items-center"
         >
-          <i class="fa fa-angles-left text-4xl"></i>
+          <Icon icon="fa6-solid:angles-left" width="2em" />
         </div>
       </button>
       <button
@@ -279,11 +278,10 @@
         <div
           bind:this={playPauseIcon}
           aria-label="play-pause-icon"
-          class="rounded-full bg-yellow-500 {isPlaying
-            ? 'px-4 pl-5'
-            : 'px-5'} py-4 bg-opacity-50 hidden text-center"
+          class="rounded-full bg-yellow-500 bg-opacity-50 hidden text-white h-14 w-14 justify-center items-center"
         >
-          <i class="fa {isPlaying ? 'fa-play' : 'fa-pause'} text-3xl"></i>
+        <Icon icon="{isPlaying ? 'fluent:play-48-filled' : 'fluent:pause-48-filled'}" width="2em" />
+        <!-- <i class="fa {isPlaying ? 'fa-play' : 'fa-pause'} text-3xl"></i> -->
         </div>
       </button>
       <button
@@ -294,9 +292,10 @@
         <div
           bind:this={rightSeekIcon}
           aria-label="right-seek-icon"
-          class="rounded-full bg-yellow-500 px-4 py-4 bg-opacity-50 hidden"
+          class="rounded-full bg-yellow-500 bg-opacity-50 hidden text-white h-14 w-14 justify-center items-center"
         >
-          <i class="fa fa-angles-right text-4xl"></i>
+       
+          <Icon icon="fa6-solid:angles-right" width="2em" />
         </div>
       </button>
     </div>
@@ -312,7 +311,7 @@
         <div class="flex flex-col items-end">
           <!-- restart/play/pause -->
           {#if ended}
-            <div
+            <button
               class="rounded-full bg-yellow-500 bg-opacity-50 my-1 flex flex-row items-center justify-center text-white {width <
               500
                 ? 'w-8 h-8 text-xs'
@@ -320,7 +319,7 @@
               on:click={restartVideo}
             >
               <Icon icon="mdi:refresh" width={width < 500 ? "1.5em" : "2em"} />
-            </div>
+        </button>
           {:else}
             <div
               class="rounded-full bg-yellow-500 bg-opacity-50 my-1 flex flex-row items-center justify-center text-white {width <
@@ -415,12 +414,15 @@
     </div>
 
     <!-- progress bar -->
-    <div class="absolute bottom-0 w-full py-2 px-4">
+    <div class="absolute bottom-0 w-full py-2 px-4  ">
       <div
         class="{showControls
           ? 'block'
           : 'hidden'} w-full h-full flex flex-row justify-center items-center"
       >
+      <div class="text-white px-2 bg-gray-700 mr-2 bg-opacity-20 rounded  {width < 500 ? 'text-xs' : 'text-sm'}">
+        {currentTime}/{totalTime}
+      </div>
         <button
           on:click={(e) => seekPosition(e)}
           class="py-4 w-full"
@@ -435,9 +437,7 @@
             ></div>
           </div>
         </button>
-        <div class="text-white px-2 {width < 500 ? 'text-xs' : 'text-sm'}">
-          {currentTime}/{totalTime}
-        </div>
+        
       </div>
     </div>
   </div>
