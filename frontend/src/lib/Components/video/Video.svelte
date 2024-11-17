@@ -1,6 +1,8 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
+
+  // expoprted variables
   export let width = 950;
   export let autoplay = false;
   export let volume = 50;
@@ -49,11 +51,13 @@
         // src is array of strings or array of quality object
         // @ts-ignore
         if (src.length == 0) return;
-        if (typeof src[0] == "string") {
+        if (typeof src[0] === "string") {
+          // @ts-ignore
           localSrc = src;
         } else {
           localSrc = src[0].src;
           currentQuality = src[0];
+          // @ts-ignore
           localQuality = src;
         }
       } else {
@@ -182,6 +186,7 @@
     showControlsFunc();
     if (!e.currentTarget) return;
 
+    // @ts-ignore
     let rect = e.currentTarget.getBoundingClientRect();
     const w = rect.right - rect.left;
     const pos = e.clientX - rect.left;
@@ -319,14 +324,14 @@
               on:click={restartVideo}
             >
               <Icon icon="mdi:refresh" width={width < 500 ? "1.5em" : "2em"} />
-        </button>
+            </button>
           {:else}
-            <div
+            <button
               class="rounded-full bg-yellow-500 bg-opacity-50 my-1 flex flex-row items-center justify-center text-white {width <
               500
                 ? 'w-8 h-8 text-xs'
                 : 'w-12 h-12'}"
-              on:click={toggle_playback}
+              on:click={() => toggle_playback(playPauseIcon)}
             >
               <!-- <i class="fa { isPlaying ? 'fa-play' : 'fa-pause'} {width < 500 ? "w-8 h-8 text-xs" : "w-12 h-12"} text-lg text-white "></i> -->
               {#if isPlaying}
@@ -334,10 +339,10 @@
               {:else}
                 <Icon icon="mdi:pause" width={width < 500 ? "1.5em" : "2em"} />
               {/if}
-            </div>
+          </button>
           {/if}
           {#if document?.fullscreenEnabled}
-            <div
+            <button
               aria-label="fullscreen-button"
               on:click={fullscreen}
               class="flex flex-row justify-center hover:bg-gray-500 bg-opacity-50 bg-gray-700 my-1 items-center text-white rounded-full {width <
@@ -349,14 +354,14 @@
                 icon="mdi:fullscreen"
                 width={width < 500 ? "1.5em" : "2em"}
               />
-            </div>
+            </button>
           {/if}
 
           <!-- quality selector if available -->
           {#if localQuality.length == 1}
-            <button
+            <div
               aria-label="qulity-button"
-              on:click={toggleQuality}
+              
               class="flex flex-row justify-center hover:bg-gray-500 bg-opacity-50 bg-gray-700 my-1 {width <
               500
                 ? 'w-8 h-8 text-xs'
@@ -365,7 +370,7 @@
               <p class="text-sm {width < 500 ? 'text-xs' : 'text-sm'}">
                 {currentQuality.quality}
               </p>
-            </button>
+            </div>
           {:else if localQuality.length > 1}
             <div class="flex flex-row-reverse group">
               <div
@@ -402,6 +407,7 @@
                     500
                       ? 'w-8 h-8'
                       : 'w-12 h-12'}">
+           
             <input
               type="range"
               orient="vertical"
@@ -437,7 +443,6 @@
             ></div>
           </div>
         </button>
-        
       </div>
     </div>
   </div>
